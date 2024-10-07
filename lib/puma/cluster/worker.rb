@@ -101,15 +101,15 @@ module Puma
                 end
               elsif idx == 0 # restart server
                 log "wrkr-fork restart server\n"
-                restart_server << true << false
+                restart_server << "restart" << "stopped"
               else
                 # fork worker
                 log "wrkr-fork fork-worker idx:#{idx}\n"
 
                 # new methods, we only queue for later
                 if use_same_thread
-                  new_workers << idx
-                  restart_server << true << false
+                  # new_workers << idx
+                  restart_server << "spawn#{idx}" << "stopped"
                 else
                   # previously, we spawn worker when we recv signals
                   worker_pids << pid = spawn_worker(idx)
@@ -126,7 +126,7 @@ module Puma
           @worker_write << "#{Puma::Const::PipeRequest::EXTERNAL_TERM}#{Process.pid}\n" rescue nil
           restart_server.clear
           server.stop
-          restart_server << false
+          restart_server << "stopped"
         end
 
         begin
@@ -137,15 +137,18 @@ module Puma
           return
         end
 
-        while restart_server.pop
+        while (cmd = restart_server.pop) != "stopped"
           log "restart_server idx:#{index}-pid:#{Process.pid}\n"
 
-          if fork_worker && use_same_thread
-            new_worker_pids = spawn_workers(new_workers)
+          if fork_worker && use_same_thread && cmd.start_with?("spawn")
+            idx = cmd.split("spawn").last.to_i
+            # new_worker_pids = spawn_workers(new_workers)
+            new_worker_pids = [spawn_worker(idx)]
             log "new_worker_pids: #{new_worker_pids}\n"
             worker_pids.concat(new_worker_pids) unless new_worker_pids.nil?
             log "worker_pids: #{worker_pids}\n"
-            next if new_worker_pids.size != 0
+
+            next
           end
 
           begin
