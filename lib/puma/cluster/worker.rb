@@ -109,7 +109,7 @@ module Puma
                 # new methods, we only queue for later
                 if use_same_thread
                   # new_workers << idx
-                  restart_server << "spawn#{idx}" << "stopped"
+                  restart_server << "spawn#{idx}"
                 else
                   # previously, we spawn worker when we recv signals
                   worker_pids << pid = spawn_worker(idx)
