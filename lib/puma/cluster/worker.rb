@@ -93,9 +93,10 @@ module Puma
                 log "wrkr-fork stop server\n"
                 if restart_server.length > 0
                   log "stopping server: #{idx}\n"
+                  log "server status: #{server.instance_variable_get("@status")}\n"
                   restart_server.clear
                   server.begin_restart(true)
-                  log "queue size at shutting down:#{restart_server.length}\n"
+                  log "queue size at shutting down:#{restart_server.length} at now: #{Time.now.to_f}\n"
                   @config.run_hooks(:before_refork, nil, @log_writer, @hook_data)
                 end
               elsif idx == 0 # restart server
@@ -156,10 +157,9 @@ module Puma
             next
           end
 
-          log "attempt run server idx:#{index}-pid:#{Process.pid}\n"
+          log ">>> begin run_server idx:#{index}-pid:#{Process.pid} at now: #{Time.now.to_f}\n"
           server_thread = server.run
-          log "server.run idx:#{index}-pid:#{Process.pid}\n"
-          log "queue size at server shutdown: #{restart_server.length}\n"
+          log ">>> end run_server idx:#{index}-pid:#{Process.pid} at now: #{Time.now.to_f}\n"
 
           if @log_writer.debug? && index == 0
             debug_loaded_extensions "Loaded Extensions - worker 0:"
@@ -186,7 +186,8 @@ module Puma
             end
           end
 
-          log "sever_thread about to join: queue size: #{restart_server.length}\n"
+          # it takes about 5ms from run server to join
+          log "sever_thread about to join: queue size: #{restart_server.length} now: #{Time.now.to_f}\n"
           server_thread.join
           log "sever_thread finish join"
         end
