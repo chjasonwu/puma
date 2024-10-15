@@ -84,6 +84,7 @@ module Puma
               idx = idx.to_i
               if idx == -1 # stop server
                 if restart_server.length > 0
+                  log "hit server.begin_restart"
                   restart_server.clear
                   server.begin_restart(true)
                   @config.run_hooks(:before_refork, nil, @log_writer, @hook_data)
@@ -100,6 +101,7 @@ module Puma
         end
 
         Signal.trap "SIGTERM" do
+          log "hit sigterm"
           @worker_write << "#{Puma::Const::PipeRequest::EXTERNAL_TERM}#{Process.pid}\n" rescue nil
           restart_server.clear
           server.stop
@@ -146,7 +148,7 @@ module Puma
 
           log "where is the log?"
           log "attempt to join"
-          server_thread.join if server_thread.alive?
+          server_thread.join
           log "finish join"
         end
 
