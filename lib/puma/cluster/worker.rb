@@ -95,13 +95,13 @@ module Puma
                   log "stopping server: #{idx}\n"
                   restart_server.clear
                   server.begin_restart(true)
-
-                  log "hook_data:#{@hook_data}"
+                  log "queue size at shutting down:#{restart_server.length}\n"
                   @config.run_hooks(:before_refork, nil, @log_writer, @hook_data)
                 end
               elsif idx == 0 # restart server
                 log "wrkr-fork restart server\n"
                 restart_server << Puma::Const::WorkerCmd::RESTART << Puma::Const::WorkerCmd::STOPPED
+                log "queue size at restarting:#{restart_server.length}\n"
               else
                 # fork worker
                 log "wrkr-fork fork-worker idx:#{idx}\n"
@@ -110,6 +110,7 @@ module Puma
                 if use_same_thread
                   # new_workers << idx
                   restart_server << "#{Puma::Const::WorkerCmd::SPAWN}#{idx}"
+                  log "queue size at forking:#{restart_server.length}\n"
                 else
                   # previously, we spawn worker when we recv signals
                   worker_pids << pid = spawn_worker(idx)
@@ -137,7 +138,7 @@ module Puma
           return
         end
 
-        while (cmd = restart_server.pop) != nil
+        while (cmd = restart_server.pop)
 
           log "cmd:#{cmd}\n"
           break if cmd == Puma::Const::WorkerCmd::STOPPED
@@ -155,13 +156,10 @@ module Puma
             next
           end
 
-          begin
-            log "attempt run server idx:#{index}-pid:#{Process.pid}\n"
-            server_thread = server.run
-            log "server.run idx:#{index}-pid:#{Process.pid}\n"
-          rescue RuntimeError
-            log "hit error"
-          end
+          log "attempt run server idx:#{index}-pid:#{Process.pid}\n"
+          server_thread = server.run
+          log "server.run idx:#{index}-pid:#{Process.pid}\n"
+          log "queue size at server shutdown: #{restart_server.length}\n"
 
           if @log_writer.debug? && index == 0
             debug_loaded_extensions "Loaded Extensions - worker 0:"
@@ -187,13 +185,18 @@ module Puma
               sleep @options[:worker_check_interval]
             end
           end
+
+          log "sever_thread about to join: queue size: #{restart_server.length}\n"
           server_thread.join
+          log "sever_thread finish join"
         end
 
+        log "queue is empty"
         # Invoke any worker shutdown hooks so they can prevent the worker
         # exiting until any background operations are completed
         @config.run_hooks(:before_worker_shutdown, index, @log_writer, @hook_data)
       ensure
+        log "logic ends"
         @worker_write << "#{Puma::Const::PipeRequest::TERM}#{Process.pid}\n" rescue nil
         @worker_write.close
       end
