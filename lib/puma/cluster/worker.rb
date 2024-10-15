@@ -91,6 +91,7 @@ module Puma
               elsif idx == 0 # restart server
                 restart_server << true << false
               else # fork worker
+                log "fork worker"
                 worker_pids << pid = spawn_worker(idx)
                 @worker_write << "#{Puma::Const::PipeRequest::FORK}#{pid}:#{idx}\n" rescue nil
               end
@@ -114,7 +115,9 @@ module Puma
         end
 
         while restart_server.pop
+          log "hit restart"
           server_thread = server.run
+          log "server_thread stopped"
 
           if @log_writer.debug? && index == 0
             debug_loaded_extensions "Loaded Extensions - worker 0:"
@@ -140,7 +143,11 @@ module Puma
               sleep @options[:worker_check_interval]
             end
           end
-          server_thread.join
+
+          log "where is the log?"
+          log "attempt to join"
+          server_thread.join if server_thread.alive?
+          log "finish join"
         end
 
         # Invoke any worker shutdown hooks so they can prevent the worker

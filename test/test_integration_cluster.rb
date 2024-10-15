@@ -477,11 +477,11 @@ class TestIntegrationCluster < TestIntegration
       fork_worker
     CONFIG
 
-    get_worker_pids # to consume server logs
+    get_worker_pids(log: true) # to consume server logs
 
     Process.kill :TTIN, @pid
 
-    assert wait_for_server_to_match(/Worker 2 \(PID: \d+\) booted in/)
+    assert wait_for_server_to_match(/Worker 2 \(PID: \d+\) booted in/, log:true)
 
     Process.kill :TTOU, @pid
 
