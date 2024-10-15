@@ -304,7 +304,7 @@ class TestIntegrationCluster < TestIntegration
       on_refork { File.write '#{refork.path}', 'Reforked' }
     CONFIG
 
-    pids = get_worker_pids 0, wrkrs
+    pids = get_worker_pids 0, wrkrs, log:true
 
     socks = []
     until refork.read == 'Reforked'
@@ -319,7 +319,7 @@ class TestIntegrationCluster < TestIntegration
 
     socks.each { |s| read_body s }
 
-    refute_includes pids, get_worker_pids(1, wrkrs - 1)
+    refute_includes pids, get_worker_pids(1, wrkrs - 1,log:true)
   end
 
   def test_fork_worker_spawn
@@ -478,6 +478,8 @@ class TestIntegrationCluster < TestIntegration
     CONFIG
 
     get_worker_pids(log: true) # to consume server logs
+
+    sleep(5) # testing only, try to debug potential race-condition
 
     Process.kill :TTIN, @pid
 
