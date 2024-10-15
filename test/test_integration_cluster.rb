@@ -480,12 +480,15 @@ class TestIntegrationCluster < TestIntegration
     get_worker_pids(log: true) # to consume server logs
 
     Process.kill :TTIN, @pid
+    assert wait_for_server_to_match(/finish join now (idx: 0)/, log:true)
 
     assert wait_for_server_to_match(/Worker 2 \(PID: \d+\) booted in/, log:true)
 
     Process.kill :TTOU, @pid
 
     assert wait_for_server_to_match(/Worker 1 \(PID: \d+\) terminating/)
+
+    assert wait_for_server_to_match(/finish join now (idx: 0)/, log:true)
   end
 
   def test_hook_data
