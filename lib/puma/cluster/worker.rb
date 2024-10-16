@@ -139,11 +139,8 @@ module Puma
           return
         end
 
-        while (cmd = restart_server.pop)
-
+        while (cmd = restart_server.pop) != Puma::Const::WorkerCmd::STOPPED
           log "cmd:#{cmd}\n"
-          break if cmd == Puma::Const::WorkerCmd::STOPPED
-
           log "restart_server idx:#{index}-pid:#{Process.pid}\n"
 
           if fork_worker && use_same_thread && cmd.start_with?(Puma::Const::WorkerCmd::SPAWN)
