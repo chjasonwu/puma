@@ -304,7 +304,7 @@ class TestIntegrationCluster < TestIntegration
       on_refork { File.write '#{refork.path}', 'Reforked' }
     CONFIG
 
-    pids = get_worker_pids 0, wrkrs, log: true
+    pids = get_worker_pids 0, wrkrs
 
     socks = []
     until refork.read == 'Reforked'
@@ -319,7 +319,7 @@ class TestIntegrationCluster < TestIntegration
 
     socks.each { |s| read_body s }
 
-    refute_includes pids, get_worker_pids(1, wrkrs - 1,log: true)
+    refute_includes pids, get_worker_pids(1, wrkrs - 1)
   end
 
   def test_fork_worker_spawn
