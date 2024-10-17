@@ -119,8 +119,8 @@ module Puma
 
           if fork_worker && cmd.start_with?(Puma::Const::WorkerCmd::SPAWN)
             idx = cmd.split(Puma::Const::WorkerCmd::SPAWN).last.to_i
-            new_worker_pids = [spawn_worker(idx)]
-            worker_pids.concat(new_worker_pids) unless new_worker_pids.nil?
+            child_pid = spawn_worker(idx)
+            worker_pids << child_pid unless child_pid.nil?
 
             next
           end
