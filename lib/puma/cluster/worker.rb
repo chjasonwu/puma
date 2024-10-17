@@ -56,7 +56,6 @@ module Puma
         # things in shape before booting the app.
         @config.run_hooks(:before_worker_boot, index, @log_writer, @hook_data)
 
-        log "@server.nil?: #{@server.nil?}\n"
         begin
           server = @server ||= start_server
         rescue Exception => e
@@ -153,6 +152,7 @@ module Puma
             end
           end
 
+          log "Server started - worker #{index}" if @log_writer.debug?
           server_thread.join
         end
 

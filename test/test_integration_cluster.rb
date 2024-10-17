@@ -472,18 +472,17 @@ class TestIntegrationCluster < TestIntegration
   end
 
   def test_culling_strategy_oldest_fork_worker
-    cli_server "-w 2 test/rackup/hello.ru", config: <<~CONFIG
+    cli_server "-w 2 test/rackup/hello.ru", puma_debug: true, config: <<~CONFIG
       worker_culling_strategy :oldest
       fork_worker
     CONFIG
 
-    get_worker_pids(log: true) # to consume server logs
-
-    sleep(5) # testing only, try to debug potential race-condition
+    get_worker_pids # to consume server logs
+    assert wait_for_server_to_match(/Server started - worker 0/) # ensure server is started for worker-0
 
     Process.kill :TTIN, @pid
 
-    assert wait_for_server_to_match(/Worker 2 \(PID: \d+\) booted in/, log: true, timeout: 40)
+    assert wait_for_server_to_match(/Worker 2 \(PID: \d+\) booted in/)
 
     Process.kill :TTOU, @pid
 
