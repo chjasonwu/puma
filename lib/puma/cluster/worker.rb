@@ -108,9 +108,11 @@ module Puma
 
         Signal.trap "SIGTERM" do
           @worker_write << "#{Puma::Const::PipeRequest::EXTERNAL_TERM}#{Process.pid}\n" rescue nil
-          restart_server.clear
-          server.stop
-          restart_server << Puma::Const::WorkerCmd::STOPPED
+          Thread.new do
+            restart_server.clear
+            server.stop
+            restart_server << Puma::Const::WorkerCmd::STOPPED
+          end
         end
 
         begin
