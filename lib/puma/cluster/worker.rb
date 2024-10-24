@@ -109,7 +109,8 @@ module Puma
         Signal.trap "SIGTERM" do
           @worker_write << "#{Puma::Const::PipeRequest::EXTERNAL_TERM}#{Process.pid}\n" rescue nil
           Thread.new do
-            # create a new thread to avoid deadlock
+            # create a new thread to avoid deadlock.
+            # acquire a mutex to ensure the server finished restarting before shutting down
             mutex.synchronize do
               restart_server.clear
               server.stop
