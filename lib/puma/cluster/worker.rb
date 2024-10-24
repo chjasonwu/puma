@@ -108,9 +108,13 @@ module Puma
 
         Signal.trap "SIGTERM" do
           @worker_write << "#{Puma::Const::PipeRequest::EXTERNAL_TERM}#{Process.pid}\n" rescue nil
-          restart_server.clear
-          server.stop
-          restart_server << Puma::Const::WorkerCmd::STOPPED
+          Thread.new do # create a new thread to avoid deadlock
+            mutex.synchronize do
+              restart_server.clear
+              server.stop
+              restart_server << Puma::Const::WorkerCmd::STOPPED
+            end
+          end
         end
 
         begin
@@ -126,7 +130,6 @@ module Puma
 
           # acquire a mutex to synchronize the server thread
           mutex.synchronize do
-
             # check if worker-0 has any request to spawn new workers
             if fork_worker && cmd.start_with?(Puma::Const::WorkerCmd::SPAWN)
               idx = cmd.split(Puma::Const::WorkerCmd::SPAWN).last.to_i
